@@ -7,8 +7,13 @@
 - Rabattiertes Getränk für 10 Minuten mit Countdown
 - Zweite Seite zeigt aktuelles Angebot
 - Stylisches Tailwind-Layout
+
+
 **Wichtig**
+
   -Benötigt Node.js V20...
+
+
 ## 🚀 Start
 
 1. ZIP entpacken
