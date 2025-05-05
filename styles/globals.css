@@ -1,0 +1,186 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "SegmentDisplay";
+  src: url("/fonts/segment.ttf") format("truetype");
+  font-display: swap;
+}
+
+/* Hintergrund für die ganze Seite */
+body {
+  @apply bg-black text-white;
+  font-family: monospace;
+}
+
+/* Animation für das Einblenden der Tabellenzeilen */
+@keyframes fadeInUpSlow {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeInUpSlow {
+  animation: fadeInUpSlow 1s ease-out;
+}
+
+/* Optional: animiertes Blinken für aktuelle Angebote */
+@keyframes pulseText {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-pulse {
+  animation: pulseText 2s infinite;
+}
+@keyframes pulseHighlight {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-pulseHighlight {
+  animation: pulseHighlight 2s infinite;
+}
+@keyframes scrollLoop {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+.scroll-content {
+  animation: scrollLoop linear infinite;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scroll-content::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes pulseHighlight {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-pulseHighlight {
+  animation: pulseHighlight 2s infinite;
+}
+
+@keyframes flashOnce {
+  0% {
+    color: #f87171;
+    opacity: 1;
+  }
+  50% {
+    color: #ffffff;
+    opacity: 1;
+  }
+  100% {
+    color: #f87171;
+    opacity: 1;
+  }
+}
+
+.animate-flashOnce {
+  animation: flashOnce 1s ease-out;
+}
+.text-glow {
+  text-shadow: 0 0 8px #ff0000;
+}
+.text-neon-green {
+  color: #00ff00;
+  text-shadow: 0 0 2px #00ff00;
+}
+
+.text-glow-red {
+  color: #ff0000;
+  text-shadow: 0 0 3px #ff0000;
+}
+
+
+
+@keyframes scrollLoop {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+.scroll-content {
+  animation: scrollLoop linear infinite;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+@keyframes blinkFast {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.animate-blinkFast {
+  animation: blinkFast 1s infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 1s ease-out forwards;
+}
+@keyframes flashScreen {
+  0% {
+    background-color: #ff0000;
+  }
+  50% {
+    background-color: black;
+  }
+  100% {
+    background-color: #ff0000;
+  }
+}
+
+.flash-screen {
+  animation: flashScreen 0.5s ease-in-out 2;
+}
+@keyframes zoomIn {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-zoomIn {
+  animation: zoomIn 0.6s ease-out forwards;
+}

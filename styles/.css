@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "SegmentDisplay";
+  src: url("/fonts/segment.ttf") format("truetype");
+  font-display: swap;
+}
+
+/* Hintergrund für die ganze Seite */
+body {
+  @apply bg-black text-white;
+  font-family: monospace;
+}
+
+/* Animation für das Einblenden der Tabellenzeilen */
+@keyframes fadeInUpSlow {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeInUpSlow {
+  animation: fadeInUpSlow 1s ease-out;
+}
+
+/* Optional: animiertes Blinken für aktuelle Angebote */
+@keyframes pulseText {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-pulse {
+  animation: pulseText 2s infinite;
+}
+
+/* Animation für das flüssige Scrollen */
+@keyframes scrollSmooth {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+.scroll-wrapper {
+  animation: scrollSmooth 60s linear infinite;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE und Edge */
+}
+
+.scroll-wrapper::-webkit-scrollbar {
+  display: none; /* Chrome, Safari und Edge (Chromium) */
+}
