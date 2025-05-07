@@ -1,7 +1,7 @@
 // pages/chart.js
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import {
   Chart as ChartJS,
@@ -33,8 +33,9 @@ export default function ChartPage() {
   const [salesData, setSalesData] = useState({ total: 0, temp: 0 });
   const [timeSalesData, setTimeSalesData] = useState([]);
   const router = useRouter();
+  const chartRef = useRef(null);
 
-  // Fetch allgemeine Verkaufsdaten
+  // Allgemeine Verkaufsdaten abrufen
   const fetchSalesData = async () => {
     if (!selectedDrink) return;
     try {
@@ -45,21 +46,56 @@ export default function ChartPage() {
         temp: data.temp[selectedDrink] || 0,
       });
     } catch (error) {
-      console.error("Fehler beim Abrufen der Daten:", error);
+      console.error("Fehler beim Abrufen der allgemeinen Verkaufsdaten:", error);
     }
   };
 
-  // Fetch zeitbezogene Verkaufsdaten
+  // Zeitbezogene Verkaufsdaten abrufen
   const fetchTimeSalesData = async () => {
     try {
       const res = await fetch(`/api/sales_time?range=${selectedRange}`);
       const data = await res.json();
-      // Nutze die neue Gruppierungsfunktion
-      const groupedSales = groupSalesByInterval(data.sales, selectedDrink);
+      const groupedSales = groupSalesByMinute(data.sales, selectedDrink);
       setTimeSalesData(groupedSales);
     } catch (error) {
-      console.error("Fehler beim Abrufen der zeitbezogenen Verkäufe:", error);
+      console.error("Fehler beim Abrufen der zeitbezogenen Verkaufsdaten:", error);
     }
+  };
+
+  // Gruppierung der Verkaufsdaten pro Minute (lokale Zeit beibehalten)
+  const groupSalesByMinute = (salesData, drinkId) => {
+    const groupedData = new Map();
+    const now = new Date();
+    const timeIntervals = {
+      "24hrs": 24 * 60,
+      "3hrs": 3 * 60,
+      "1hr": 60,
+      "10min": 10,
+    };
+    const minutesBack = timeIntervals[selectedRange] || 120;
+
+    // Erzeuge für die letzten 'minutesBack' Minuten einen Eintrag pro Minute
+    for (let i = minutesBack - 1; i >= 0; i--) {
+      const time = new Date(now.getTime() - i * 60 * 1000);
+      time.setSeconds(0, 0);
+      groupedData.set(time.getTime(), 0);
+    }
+
+    // Füge Verkaufsdaten hinzu (nur für das ausgewählte Getränk)
+    salesData
+      .filter((sale) => sale.drink_id === selectedDrink)
+      .forEach((sale) => {
+        // Ersetze das Leerzeichen im Zeitstempel, damit dieser als lokale Zeit interpretiert wird
+        const saleTime = new Date(sale.timestamp.replace(" ", "T"));
+        saleTime.setSeconds(0, 0);
+        const key = saleTime.getTime();
+        groupedData.set(key, (groupedData.get(key) || 0) + sale.amount);
+      });
+
+    return Array.from(groupedData.entries()).map(([t, amount]) => ({
+      x: new Date(Number(t)),
+      y: amount,
+    }));
   };
 
   useEffect(() => {
@@ -72,66 +108,10 @@ export default function ChartPage() {
     return () => clearInterval(interval);
   }, [selectedDrink, selectedRange]);
 
-  /* 
-    Gruppierung der Verkaufsdaten:
-    - Wenn der Bereich "24hrs" gewählt ist, wird der binSize-Wert auf 10 (Minuten) gesetzt.
-    - Für alle anderen Bereiche wird in 1-Minuten-Intervallen gruppiert.
-    - Es wird eine Zeitreihe von der Startzeit (jetzt minus die gesamte Betrachtungsdauer) bis jetzt erzeugt, aufgeteilt in Bins (Intervallen).
-    - Anschließend werden alle Verkäufe (nur des ausgewählten Getränks) auf das passende Intervall („Bin“) aufsummiert.
-  */
-  const groupSalesByInterval = (salesData, drinkId) => {
-    // Bei "24hrs" 10-minütige Intervalle, ansonsten 1-Minuten-Schritte
-    const binSize = selectedRange === "24hrs" ? 10 : 1;
-    const timeIntervals = {
-      "24hrs": 24 * 60,
-      "3hrs": 3 * 60,
-      "1hr": 60,
-      "10min": 10,
-    };
-    const minutesBack = timeIntervals[selectedRange] || 120;
-    const groupedData = new Map();
-    const now = new Date();
-    // Startzeit = jetzt minus die betrachtete Zeitdauer
-    const startTime = new Date(now.getTime() - minutesBack * 60 * 1000);
-    startTime.setSeconds(0, 0);
-
-    // Erzeuge Bins in Schritten von binSize
-    for (
-      let t = startTime.getTime();
-      t <= now.getTime();
-      t += binSize * 60 * 1000
-    ) {
-      groupedData.set(t, 0);
-    }
-
-    // Füge Verkaufsdaten hinzu (nur für das ausgewählte Getränk)
-    salesData
-      .filter((sale) => sale.drink_id === drinkId)
-      .forEach((sale) => {
-        // Ersetze das Leerzeichen, damit der Zeitstempel als lokale Zeit interpretiert wird
-        const saleTime = new Date(sale.timestamp.replace(" ", "T"));
-        saleTime.setSeconds(0, 0);
-        if (saleTime.getTime() < startTime.getTime()) return;
-        const diff = saleTime.getTime() - startTime.getTime();
-        const binIndex = Math.floor(diff / (binSize * 60 * 1000));
-        const binStart = startTime.getTime() + binIndex * binSize * 60 * 1000;
-        groupedData.set(binStart, (groupedData.get(binStart) || 0) + sale.amount);
-      });
-
-    const result = Array.from(groupedData.entries()).map(([t, amount]) => ({
-      x: new Date(Number(t)),
-      y: amount,
-    }));
-    result.sort((a, b) => a.x - b.x);
-    return result;
-  };
-
   const timeChartData = {
     datasets: [
       {
-        label: selectedRange === "24hrs"
-          ? "Verkäufe (10 Min Schritte)"
-          : "Verkäufe pro Minute",
+        label: "Verkäufe pro Minute",
         data: timeSalesData,
         backgroundColor: "rgba(75,192,192,0.6)",
         borderColor: "rgba(75,192,192,1)",
@@ -154,7 +134,7 @@ export default function ChartPage() {
     grid: { color: "rgba(255,255,255,0.1)" },
   };
 
-  // Falls "10min" gewählt ist, werden hier explizit die min/max-Werte gesetzt:
+  // Bei Auswahl "10min" wird min/max explizit gesetzt
   if (selectedRange === "10min") {
     xAxisOptions.min = new Date(Date.now() - 10 * 60 * 1000);
     xAxisOptions.max = new Date();
@@ -174,6 +154,35 @@ export default function ChartPage() {
       legend: { labels: { color: "white" } },
       tooltip: { mode: "index", intersect: false },
     },
+  };
+
+  // Exportiert das Diagramm als PNG-Bild
+  const exportChartAsImage = () => {
+    const chart = chartRef.current;
+    if (chart) {
+      // Direkter Aufruf von toBase64Image, da chartRef.current die Chart-Instanz ist
+      const url = chart.toBase64Image();
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "chart-export.png";
+      link.click();
+    } else {
+      alert("Chart konnte nicht exportiert werden.");
+    }
+  };
+
+  // Exportiert die aggregierten Verkaufsdaten als CSV
+  const exportDataAsCSV = () => {
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Zeit,Verkäufe\n";
+    timeSalesData.forEach(({ x, y }) => {
+      csvContent += `${x.toISOString()},${y}\n`;
+    });
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.href = encodedUri;
+    link.download = "sales_data.csv";
+    link.click();
   };
 
   return (
@@ -205,6 +214,7 @@ export default function ChartPage() {
 
       <div className="w-full bg-gray-900 p-4 rounded-lg shadow-lg mb-4">
         <Chart
+          ref={chartRef}
           type="bar"
           data={timeChartData}
           options={timeChartOptions}
@@ -213,7 +223,7 @@ export default function ChartPage() {
         />
       </div>
 
-      {/* Navigationsbereich */}
+      {/* Navigationsbereich + Export-Buttons */}
       <div className="flex flex-col gap-4 w-full max-w-md">
         <button
           onClick={() => router.push("/highlight")}
@@ -232,6 +242,18 @@ export default function ChartPage() {
           className="bg-gray-600 hover:bg-gray-800 text-white px-4 py-2 text-lg rounded-md"
         >
           Zurück zur Startseite
+        </button>
+        <button
+          onClick={exportChartAsImage}
+          className="bg-purple-600 hover:bg-purple-800 text-white px-4 py-2 text-lg rounded-md"
+        >
+          Diagramm exportieren (PNG)
+        </button>
+        <button
+          onClick={exportDataAsCSV}
+          className="bg-orange-600 hover:bg-orange-800 text-white px-4 py-2 text-lg rounded-md"
+        >
+          Verkaufsdaten exportieren (CSV)
         </button>
       </div>
     </main>

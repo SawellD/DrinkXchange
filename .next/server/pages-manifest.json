@@ -2,10 +2,9 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/api/stats": "pages/api/stats.js",
-  "/api/discount": "pages/api/discount.js",
-  "/chart": "pages/chart.js",
-  "/highlight": "pages/highlight.js",
   "/": "pages/index.js",
+  "/chart": "pages/chart.js",
+  "/api/stats": "pages/api/stats.js",
+  "/debug": "pages/debug.js",
   "/api/sales_time": "pages/api/sales_time.js"
 }

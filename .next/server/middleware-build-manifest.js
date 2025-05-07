@@ -25,10 +25,10 @@ globalThis.__BUILD_MANIFEST = {
       "static/chunks/main.js",
       "static/chunks/pages/chart.js"
     ],
-    "/highlight": [
+    "/debug": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/highlight.js"
+      "static/chunks/pages/debug.js"
     ]
   },
   "ampFirstPages": []
