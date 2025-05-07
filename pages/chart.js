@@ -3,66 +3,62 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
+import Select from "react-select";
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement,
+  LineElement,
   TimeScale,
   Title,
   Tooltip,
   Legend,
+  PointElement
 } from "chart.js";
-import "chartjs-adapter-date-fns"; // Adapter für date-fns (Zeitachse)
+import "chartjs-adapter-date-fns";
 import { Chart } from "react-chartjs-2";
 import { drinks } from "../lib/drinks";
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  BarElement,
+  LineElement,
   TimeScale,
+  PointElement,
   Title,
   Tooltip,
   Legend
 );
 
 export default function ChartPage() {
-  const [selectedDrink, setSelectedDrink] = useState(drinks[0]?.id || null);
+  const [selectedDrinks, setSelectedDrinks] = useState(
+    drinks.map((drink) => ({ value: drink.id, label: drink.name }))
+  );
+  const [rawSalesData, setRawSalesData] = useState([]);
   const [selectedRange, setSelectedRange] = useState("2hrs");
-  const [salesData, setSalesData] = useState({ total: 0, temp: 0 });
-  const [timeSalesData, setTimeSalesData] = useState([]);
   const router = useRouter();
   const chartRef = useRef(null);
 
-  // Allgemeine Verkaufsdaten abrufen
-  const fetchSalesData = async () => {
-    if (!selectedDrink) return;
-    try {
-      const res = await fetch(`/api/stats`);
-      const data = await res.json();
-      setSalesData({
-        total: data.total[selectedDrink] || 0,
-        temp: data.temp[selectedDrink] || 0,
-      });
-    } catch (error) {
-      console.error("Fehler beim Abrufen der allgemeinen Verkaufsdaten:", error);
-    }
-  };
-
-  // Zeitbezogene Verkaufsdaten abrufen
+  // Verkaufsdaten abrufen
   const fetchTimeSalesData = async () => {
     try {
       const res = await fetch(`/api/sales_time?range=${selectedRange}`);
       const data = await res.json();
-      const groupedSales = groupSalesByMinute(data.sales, selectedDrink);
-      setTimeSalesData(groupedSales);
+      setRawSalesData(data.sales);
     } catch (error) {
-      console.error("Fehler beim Abrufen der zeitbezogenen Verkaufsdaten:", error);
+      console.error("Fehler beim Abrufen der Verkaufsdaten:", error);
     }
   };
 
-  // Gruppierung der Verkaufsdaten pro Minute (lokale Zeit beibehalten)
+  useEffect(() => {
+    fetchTimeSalesData();
+    const interval = setInterval(() => {
+      fetchTimeSalesData();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [selectedDrinks, selectedRange]);
+
+  // Verkaufsdaten pro Getränk gruppieren
   const groupSalesByMinute = (salesData, drinkId) => {
     const groupedData = new Map();
     const now = new Date();
@@ -74,22 +70,21 @@ export default function ChartPage() {
     };
     const minutesBack = timeIntervals[selectedRange] || 120;
 
-    // Erzeuge für die letzten 'minutesBack' Minuten einen Eintrag pro Minute
     for (let i = minutesBack - 1; i >= 0; i--) {
       const time = new Date(now.getTime() - i * 60 * 1000);
       time.setSeconds(0, 0);
       groupedData.set(time.getTime(), 0);
     }
 
-    // Füge Verkaufsdaten hinzu (nur für das ausgewählte Getränk)
     salesData
-      .filter((sale) => sale.drink_id === selectedDrink)
+      .filter((sale) => sale.drink_id === drinkId)
       .forEach((sale) => {
-        // Ersetze das Leerzeichen im Zeitstempel, damit dieser als lokale Zeit interpretiert wird
         const saleTime = new Date(sale.timestamp.replace(" ", "T"));
         saleTime.setSeconds(0, 0);
         const key = saleTime.getTime();
-        groupedData.set(key, (groupedData.get(key) || 0) + sale.amount);
+        if (groupedData.has(key)) {
+          groupedData.set(key, groupedData.get(key) + sale.amount);
+        }
       });
 
     return Array.from(groupedData.entries()).map(([t, amount]) => ({
@@ -98,53 +93,53 @@ export default function ChartPage() {
     }));
   };
 
-  useEffect(() => {
-    fetchSalesData();
-    fetchTimeSalesData();
-    const interval = setInterval(() => {
-      fetchSalesData();
-      fetchTimeSalesData();
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [selectedDrink, selectedRange]);
+  // Dynamische Farbzuweisung für jedes Getränk
+  const distinctColors = [
+    "#FF5733", // Rot-Orange
+    "#33FF57", // Grün
+    "#3357FF", // Blau
+    "#FF33A1", // Pink
+    "#A133FF", // Lila
+    "#FFD700"  // Goldgelb
+  ];
+  
+  const generateColor = (id) => {
+    return distinctColors[id % distinctColors.length]; 
+  };
+  
+
+  // Linien-Datasets für ausgewählte Getränke
+  const datasets = selectedDrinks.map((drink) => {
+    const groupedData = groupSalesByMinute(rawSalesData, drink.value);
+    return {
+      label: drink.label,
+      data: groupedData,
+      borderColor: generateColor(drink.value),
+      borderWidth: 2,
+      tension: 0.4,
+      pointRadius: 0,
+      fill: false,
+    };
+  });
 
   const timeChartData = {
-    datasets: [
-      {
-        label: "Verkäufe pro Minute",
-        data: timeSalesData,
-        backgroundColor: "rgba(75,192,192,0.6)",
-        borderColor: "rgba(75,192,192,1)",
-        borderWidth: 1,
-        barThickness: "flex", // Balkenbreite passt sich automatisch an
-        maxBarThickness: 40,
-      },
-    ],
+    datasets: datasets,
   };
-
-  // Konfiguration der X-Achse
-  const xAxisOptions = {
-    type: "time",
-    time: {
-      unit: "minute",
-      displayFormats: { minute: "HH:mm" },
-      tooltipFormat: "yyyy-MM-dd HH:mm:ss",
-    },
-    ticks: { autoSkip: false, maxTicksLimit: 20 },
-    grid: { color: "rgba(255,255,255,0.1)" },
-  };
-
-  // Bei Auswahl "10min" wird min/max explizit gesetzt
-  if (selectedRange === "10min") {
-    xAxisOptions.min = new Date(Date.now() - 10 * 60 * 1000);
-    xAxisOptions.max = new Date();
-  }
 
   const timeChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     scales: {
-      x: xAxisOptions,
+      x: {
+        type: "time",
+        time: {
+          unit: "minute",
+          displayFormats: { minute: "HH:mm" },
+          tooltipFormat: "yyyy-MM-dd HH:mm:ss",
+        },
+        ticks: { autoSkip: false, maxTicksLimit: 20 },
+        grid: { color: "rgba(255,255,255,0.1)" },
+      },
       y: {
         beginAtZero: true,
         grid: { color: "rgba(255,255,255,0.1)" },
@@ -156,11 +151,10 @@ export default function ChartPage() {
     },
   };
 
-  // Exportiert das Diagramm als PNG-Bild
+  // Export als PNG
   const exportChartAsImage = () => {
     const chart = chartRef.current;
     if (chart) {
-      // Direkter Aufruf von toBase64Image, da chartRef.current die Chart-Instanz ist
       const url = chart.toBase64Image();
       const link = document.createElement("a");
       link.href = url;
@@ -171,12 +165,15 @@ export default function ChartPage() {
     }
   };
 
-  // Exportiert die aggregierten Verkaufsdaten als CSV
+  // Export als CSV
   const exportDataAsCSV = () => {
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Zeit,Verkäufe\n";
-    timeSalesData.forEach(({ x, y }) => {
-      csvContent += `${x.toISOString()},${y}\n`;
+    csvContent += "Zeit,Verkäufe,Getränk\n";
+    selectedDrinks.forEach((drink) => {
+      const grouped = groupSalesByMinute(rawSalesData, drink.value);
+      grouped.forEach(({ x, y }) => {
+        csvContent += `${x.toISOString()},${y},${drink.label}\n`;
+      });
     });
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -187,19 +184,22 @@ export default function ChartPage() {
 
   return (
     <main className="flex flex-col items-center min-h-screen bg-black text-white p-6">
-      <h1 className="text-3xl font-bold mb-4 text-red-500">Getränke-Verkäufe</h1>
+      <h1 className="text-3xl font-bold mb-4 text-red-500">
+        Getränke-Verkäufe
+      </h1>
 
-      <select
-        value={selectedDrink}
-        onChange={(e) => setSelectedDrink(Number(e.target.value))}
-        className="p-2 mb-4 bg-gray-800 text-white rounded-md"
-      >
-        {drinks.map((drink) => (
-          <option key={drink.id} value={drink.id}>
-            {drink.name}
-          </option>
-        ))}
-      </select>
+      <div className="mb-4 w-full max-w-md">
+        <Select
+          isMulti
+          options={drinks.map((drink) => ({
+            value: drink.id,
+            label: drink.name,
+          }))}
+          value={selectedDrinks}
+          onChange={setSelectedDrinks}
+          className="text-black"
+        />
+      </div>
 
       <select
         value={selectedRange}
@@ -213,46 +213,17 @@ export default function ChartPage() {
       </select>
 
       <div className="w-full bg-gray-900 p-4 rounded-lg shadow-lg mb-4">
-        <Chart
-          ref={chartRef}
-          type="bar"
-          data={timeChartData}
-          options={timeChartOptions}
-          width={"100%"}
-          height={400}
-        />
+        <Chart ref={chartRef} type="line" data={timeChartData} options={timeChartOptions} width={"100%"} height={400} />
       </div>
 
-      {/* Navigationsbereich + Export-Buttons */}
-      <div className="flex flex-col gap-4 w-full max-w-md">
-        <button
-          onClick={() => router.push("/highlight")}
-          className="bg-green-600 hover:bg-green-800 text-white px-4 py-2 text-lg rounded-md"
-        >
-          Zur Highlight-Seite
-        </button>
-        <button
-          onClick={() => router.push("/debug")}
-          className="bg-blue-600 hover:bg-blue-800 text-white px-4 py-2 text-lg rounded-md"
-        >
-          Zum Debug-Bereich
-        </button>
-        <button
-          onClick={() => router.push("/")}
-          className="bg-gray-600 hover:bg-gray-800 text-white px-4 py-2 text-lg rounded-md"
-        >
+      <div className="flex flex-col gap-4 w-full max-w-md mt-6">
+        <button onClick={() => router.push("/")} className="bg-gray-600 hover:bg-gray-800 text-white px-4 py-2 text-lg rounded-md">
           Zurück zur Startseite
         </button>
-        <button
-          onClick={exportChartAsImage}
-          className="bg-purple-600 hover:bg-purple-800 text-white px-4 py-2 text-lg rounded-md"
-        >
+        <button onClick={exportChartAsImage} className="bg-purple-600 hover:bg-purple-800 text-white px-4 py-2 text-lg rounded-md">
           Diagramm exportieren (PNG)
         </button>
-        <button
-          onClick={exportDataAsCSV}
-          className="bg-orange-600 hover:bg-orange-800 text-white px-4 py-2 text-lg rounded-md"
-        >
+        <button onClick={exportDataAsCSV} className="bg-orange-600 hover:bg-orange-800 text-white px-4 py-2 text-lg rounded-md">
           Verkaufsdaten exportieren (CSV)
         </button>
       </div>
