@@ -7,12 +7,16 @@
     "start": "NODE_ENV=production node server.js"
   },
   "dependencies": {
+    "axios": "^1.9.0",
     "better-sqlite3": "^8.3.0",
     "canvas-confetti": "^1.9.3",
+    "chart.js": "^4.4.9",
+    "chartjs-adapter-date-fns": "^3.0.0",
     "lucide-react": "^0.487.0",
     "next": "latest",
     "node-cron": "^3.0.3",
     "react": "latest",
+    "react-chartjs-2": "^5.3.0",
     "react-dom": "latest"
   },
   "devDependencies": {

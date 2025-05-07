@@ -11,8 +11,13 @@ export default function handler(req, res) {
 
       console.log("Daten empfangen:", sales);  // <-- Debug!
 
-      const insertTemp = db.prepare('INSERT INTO sales_temp (drink_id, amount, timestamp) VALUES (?, ?, CURRENT_TIMESTAMP)');
-      const insertTotal = db.prepare('INSERT INTO sales_total (drink_id, amount, timestamp) VALUES (?, ?, CURRENT_TIMESTAMP)');
+      // Verwende datetime('now', 'localtime') für lokale Zeitstempel
+      const insertTemp = db.prepare(
+        'INSERT INTO sales_temp (drink_id, amount, timestamp) VALUES (?, ?, datetime(\'now\', \'localtime\'))'
+      );
+      const insertTotal = db.prepare(
+        'INSERT INTO sales_total (drink_id, amount, timestamp) VALUES (?, ?, datetime(\'now\', \'localtime\'))'
+      );
 
       Object.keys(sales).forEach((id) => {
         if (sales[id] > 0) {
@@ -24,9 +29,7 @@ export default function handler(req, res) {
       db.close();
 
       res.status(200).json({ success: true });
-
     } catch (error) {
-      // <-- HIER Fehlerausgabe einfügen:
       console.error("Fehler beim Einfügen:", error);
       res.status(500).json({ success: false, error: error.message });
     }

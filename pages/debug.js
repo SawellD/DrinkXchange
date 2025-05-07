@@ -18,7 +18,6 @@ export default function Debug() {
     }
   }, [drinks, selectedDrinkId]);
 
-
   const handlePinSubmit = () => {
     if (pin === "2233") {
       setIsAuthenticated(true);
@@ -56,16 +55,15 @@ export default function Debug() {
     }
   };
 
-
   // New handlers for manual discount
   const handleSetManualDiscount = async () => {
-     if (actionPin !== "2233") {
+    if (actionPin !== "2233") {
       alert("Falscher PIN!");
       return;
     }
     if (selectedDrinkId === null) {
-        alert("Bitte ein Getränk auswählen.");
-        return;
+      alert("Bitte ein Getränk auswählen.");
+      return;
     }
 
     try {
@@ -91,7 +89,7 @@ export default function Debug() {
   };
 
   const handleClearManualDiscount = async () => {
-     if (actionPin !== "2233") {
+    if (actionPin !== "2233") {
       alert("Falscher PIN!");
       return;
     }
@@ -117,7 +115,6 @@ export default function Debug() {
       alert("Fehler beim Löschen des manuellen Rabatts.");
     }
   };
-
 
   if (!isAuthenticated) {
     return (
@@ -147,15 +144,17 @@ export default function Debug() {
 
       {/* PIN Input for Actions */}
       <div className="mb-6">
-         <label htmlFor="actionPin" className="block text-lg font-medium text-gray-300 mb-2">PIN für Aktionen:</label>
-         <input
-            id="actionPin"
-            type="password"
-            value={actionPin}
-            onChange={(e) => setActionPin(e.target.value)}
-            placeholder="PIN eingeben"
-            className="p-2 text-lg rounded-md text-black w-full max-w-xs"
-         />
+        <label htmlFor="actionPin" className="block text-lg font-medium text-gray-300 mb-2">
+          PIN für Aktionen:
+        </label>
+        <input
+          id="actionPin"
+          type="password"
+          value={actionPin}
+          onChange={(e) => setActionPin(e.target.value)}
+          placeholder="PIN eingeben"
+          className="p-2 text-lg rounded-md text-black w-full max-w-xs"
+        />
       </div>
 
       {/* Manual Discount Section */}
@@ -163,11 +162,11 @@ export default function Debug() {
         <h2 className="text-2xl font-bold mb-4 text-blue-400">Manueller Rabatt</h2>
         <div className="flex flex-col items-center gap-4">
           <select
-            value={selectedDrinkId || ''} // Use empty string for null/undefined
+            value={selectedDrinkId || ""} // Use empty string for null/undefined
             onChange={(e) => setSelectedDrinkId(parseInt(e.target.value))}
             className="p-2 text-lg rounded-md text-black w-full"
           >
-            {drinks.map(drink => (
+            {drinks.map((drink) => (
               <option key={drink.id} value={drink.id}>
                 {drink.name}
               </option>
@@ -196,14 +195,21 @@ export default function Debug() {
         >
           Datenbank zurücksetzen
         </button>
-
       </div>
 
+      {/* Navigation Buttons */}
       <button
         onClick={() => router.push("/highlight")}
         className="mt-4 bg-green-600 hover:bg-green-800 text-white px-4 py-2 text-lg rounded-md"
       >
         Zur Highlight-Seite
+      </button>
+
+      <button
+        onClick={() => router.push("/chart")}
+        className="mt-4 bg-purple-600 hover:bg-purple-800 text-white px-4 py-2 text-lg rounded-md"
+      >
+        Zur Chart-Seite
       </button>
 
       <button
