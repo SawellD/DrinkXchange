@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react"; 
 import { useRouter } from "next/router";
 import { drinks } from "../lib/drinks"; 
+import { PageConfig } from "../lib/PageConfig";
+const t = PageConfig.translations[PageConfig.language];
 
 export default function Debug() {
   const [pin, setPin] = useState("");
@@ -29,7 +31,7 @@ export default function Debug() {
       setIsAuthenticated(true);
       setErrorMessage("");
     } else {
-      setErrorMessage("Falscher PIN!");
+      setErrorMessage(t.wrongpin);
     }
   };
 
@@ -45,7 +47,7 @@ export default function Debug() {
     if (data.success) {
       alert(data.message);
     } else {
-      alert("Fehler beim Setzen des manuellen Rabatts: " + data.message);
+      alert(t.errorsetdiscount + data.message);
     }
   };
 
@@ -61,7 +63,7 @@ export default function Debug() {
     if (data.success) {
       alert(data.message);
     } else {
-      alert("Fehler beim Löschen des Rabatts: " + data.message);
+      alert(t.errordeletediscount + data.message);
     }
   };
 
@@ -78,11 +80,11 @@ const handleChangePin = async () => {
 
   const data = await response.json();
   if (data.success) {
-    alert("PIN erfolgreich geändert!");
+    alert(t.pinchanged);
     setCurrentPin(""); // Eingabe zurücksetzen
     setUpdatedPin(""); // Eingabe zurücksetzen
   } else {
-    alert("Fehler: " + data.error);
+    alert(t.error + data.error);
   }
 };
 
@@ -90,19 +92,19 @@ const handleChangePin = async () => {
   if (!isAuthenticated) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-black text-white p-4">
-        <h1 className="text-3xl font-bold mb-4">Debug-Bereich</h1>
+        <h1 className="text-3xl font-bold mb-4">{t.titledebug}</h1>
         <input
           type="password"
           value={pin}
           onChange={(e) => setPin(e.target.value)}
-          placeholder="PIN eingeben"
+          placeholder={t.enterpin}
           className="mb-4 p-2 text-lg rounded-md text-black"
         />
         <button
           onClick={handlePinSubmit}
           className="bg-blue-600 hover:bg-blue-800 text-white px-4 py-2 text-lg rounded-md"
         >
-          Bestätigen
+          {t.confirm}
         </button>
         {errorMessage && <p className="text-red-500 mt-4">{errorMessage}</p>}
       </div>
@@ -111,11 +113,11 @@ const handleChangePin = async () => {
 
   return (
     <div className="flex flex-col justify-center items-center min-h-screen bg-black text-white p-4">
-      <h1 className="text-3xl font-bold mb-6">Debug-Bereich</h1>
+      <h1 className="text-3xl font-bold mb-6">{t.titledebug}</h1>
 
       {/* 🏷️ Manueller Rabatt */}
       <div className="mb-6 p-4 bg-gray-800 rounded-lg shadow-md w-full max-w-md">
-        <h2 className="text-xl font-bold text-blue-400 mb-3">Manueller Rabatt</h2>
+        <h2 className="text-xl font-bold text-blue-400 mb-3">{t.mandiscount}</h2>
         <select
           value={selectedDrinkId || ""}
           onChange={(e) => setSelectedDrinkId(parseInt(e.target.value))}
@@ -131,29 +133,29 @@ const handleChangePin = async () => {
           onClick={handleSetManualDiscount}
           className="mt-4 bg-green-600 hover:bg-green-800 text-white px-4 py-2 text-lg rounded-md w-full"
         >
-          Rabatt setzen (10 Min)
+          {t.setdiscount}
         </button>
         <button
           onClick={handleClearManualDiscount}
           className="mt-4 bg-orange-600 hover:bg-orange-800 text-white px-4 py-2 text-lg rounded-md w-full"
         >
-          Rabatt löschen
+          {t.rmdiscount}
         </button>
       </div>
 
       {/* 🔁 Debug-Navigation */}
-      <button onClick={() => router.push("/highlight")} className="mt-4 bg-green-600 hover:bg-green-800 text-white px-4 py-2 text-lg rounded-md">Zur Highlight-Seite</button>
-      <button onClick={() => router.push("/chart")} className="mt-4 bg-purple-600 hover:bg-purple-800 text-white px-4 py-2 text-lg rounded-md">Zur Chart-Seite</button>
-      <button onClick={() => router.push("/")} className="mt-4 bg-gray-600 hover:bg-gray-800 text-white px-4 py-2 text-lg rounded-md">Zurück zur Startseite</button>
+      <button onClick={() => router.push("/highlight")} className="mt-4 bg-green-600 hover:bg-green-800 text-white px-4 py-2 text-lg rounded-md">{t.highlight}</button>
+      <button onClick={() => router.push("/chart")} className="mt-4 bg-purple-600 hover:bg-purple-800 text-white px-4 py-2 text-lg rounded-md">{t.chart}</button>
+      <button onClick={() => router.push("/")} className="mt-4 bg-gray-600 hover:bg-gray-800 text-white px-4 py-2 text-lg rounded-md">{t.home}</button>
 
       {/* 🔑 PIN ändern (Ans Ende verschoben) */}
       <div className="mt-10 p-4 bg-gray-800 rounded-lg shadow-md w-full max-w-md">
-        <h2 className="text-xl font-bold text-blue-400 mb-3">PIN ändern</h2>
+        <h2 className="text-xl font-bold text-blue-400 mb-3">{t.changepin}</h2>
         <input
   type="password"
   value={currentPin}
   onChange={(e) => setCurrentPin(e.target.value)}
-  placeholder="Alte PIN eingeben"
+  placeholder={t.enterold}
   className="mb-3 p-2 text-lg rounded-md text-black w-full"
 />
 
@@ -161,7 +163,7 @@ const handleChangePin = async () => {
   type="password"
   value={updatedPin}
   onChange={(e) => setUpdatedPin(e.target.value)}
-  placeholder="Neue PIN eingeben"
+  placeholder={t.enternew}
   className="mb-3 p-2 text-lg rounded-md text-black w-full"
 />
 
@@ -169,7 +171,7 @@ const handleChangePin = async () => {
   onClick={handleChangePin}
   className="bg-green-600 hover:bg-green-800 text-white px-4 py-2 text-lg rounded-md w-full"
 >
-  PIN ändern
+  {t.changepin}
 </button>
 
       </div>

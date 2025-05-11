@@ -4,6 +4,8 @@
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
   "/highlight": "pages/highlight.js",
+  "/api/auth": "pages/api/auth.js",
+  "/debug": "pages/debug.js",
   "/api/discount": "pages/api/discount.js",
   "/api/stats": "pages/api/stats.js"
 }
