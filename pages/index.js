@@ -4,7 +4,8 @@
 import { useState, useEffect } from "react";
 import { Settings } from "lucide-react"; // Zahnrad-Icon aus lucide-react
 import { drinks } from "../lib/drinks"; // Import the centralized drinks data
-
+import { PageConfig } from "../lib/PageConfig"; // Currency and Other Settings
+const t = PageConfig.translations[PageConfig.language];
 export default function InputPage() {
   const [counts, setCounts] = useState({});
   const [savedCounts, setSavedCounts] = useState({});
@@ -90,7 +91,7 @@ export default function InputPage() {
       </div>
 
       <h1 className="text-4xl font-bold mb-6 text-center text-red-500">
-        Eingabe
+        {t.titleindex}
       </h1>
 
       {/* Getränkeliste - Multi-column grid on larger screens */}
@@ -105,7 +106,7 @@ export default function InputPage() {
                 <div>
                   <h2 className="text-xl sm:text-2xl font-bold">{drink.name}</h2> {/* Adjusted font size */}
                   <p className="text-base sm:text-lg text-gray-300"> {/* Adjusted font size */}
-                    {displayedPrice} Marken {isDiscounted && <span className="text-red-400 font-bold ml-1 sm:ml-2">Rabatt!</span>} {/* Adjusted margin-left */}
+                    {displayedPrice} {PageConfig.currency} {isDiscounted && <span className="text-red-400 font-bold ml-1 sm:ml-2">Rabatt!</span>} {/* Adjusted margin-left */}
                   </p>
                 </div>
                 <div className="text-3xl sm:text-4xl font-extrabold text-green-400"> {/* Adjusted font size */}
@@ -143,7 +144,7 @@ export default function InputPage() {
       <div className="fixed bottom-0 left-0 right-0 bg-black p-4 flex flex-col sm:flex-row gap-4 justify-between items-center border-t-2 border-gray-700">
          {/* Display Total Price */}
         <div className="text-xl sm:text-2xl font-bold text-green-400">
-          Gesamt: {totalAmount} Marken
+          {t.total} {totalAmount} {PageConfig.currency}
         </div>
         {/* Button Group */}
         <div className="flex gap-4 justify-center sm:justify-end sm:flex-1"> {/* Center buttons in column, push right in row */}
@@ -151,14 +152,14 @@ export default function InputPage() {
             className="bg-yellow-500 hover:bg-yellow-600 text-black text-xl sm:text-2xl font-bold py-2 px-4 sm:py-3 sm:px-6 rounded-lg"
             onClick={undo}
           >
-            Rückgängig
+            {t.undo}
           </button>
 
           <button
             className="bg-blue-600 hover:bg-blue-700 text-white text-xl sm:text-2xl font-bold py-2 px-4 sm:py-3 sm:px-6 rounded-lg"
             onClick={save}
           >
-            Speichern
+            {t.save}
           </button>
         </div>
       </div>

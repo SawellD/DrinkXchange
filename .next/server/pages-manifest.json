@@ -2,8 +2,8 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/debug": "pages/debug.js",
   "/": "pages/index.js",
-  "/api/changePin": "pages/api/changePin.js",
-  "/api/discount": "pages/api/discount.js"
+  "/highlight": "pages/highlight.js",
+  "/api/discount": "pages/api/discount.js",
+  "/api/stats": "pages/api/stats.js"
 }
