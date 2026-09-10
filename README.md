@@ -55,7 +55,7 @@ PORT=8080 docker compose up -d --build
 
 ### Administration
 
-Open `/debug` and authenticate with the admin PIN. The administration area can change display settings, language, currency, discount value, highlight colors, drinks, prices, sales values, and PIN. It also provides manual discount, reset, and database backup tools.
+Open `/debug` and authenticate with the admin PIN. The administration area can change display settings, language, currency, discount value, highlight colors, drinks, prices, sales values, and PIN. It also provides manual discount, reset, and database backup tools. Default PIN 5555
 
 ### Data and backups
 
@@ -118,7 +118,7 @@ PORT=8080 docker compose up -d --build
 
 ### Administration
 
-`/debug` öffnen und mit der Admin-PIN anmelden. Dort lassen sich Anzeigeeinstellungen, Sprache, Währung, Rabattwert, Highlight-Farben, Getränke, Preise, Verkaufswerte und PIN ändern. Außerdem stehen manuelle Rabatte, Zurücksetzen und Datenbank-Backups zur Verfügung.
+`/debug` öffnen und mit der Admin-PIN anmelden. Dort lassen sich Anzeigeeinstellungen, Sprache, Währung, Rabattwert, Highlight-Farben, Getränke, Preise, Verkaufswerte und PIN ändern. Außerdem stehen manuelle Rabatte, Zurücksetzen und Datenbank-Backups zur Verfügung.Standard PIN 5555
 
 ### Daten und Backups
 
