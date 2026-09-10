@@ -1,8 +1,5 @@
 import bcrypt from 'bcrypt';
-import Database from 'better-sqlite3';
-import path from 'path';
-
-const dbPath = path.join(process.cwd(), 'database', 'bierboerse.db');
+import { openDatabase } from '../../lib/database.cjs';
 
 export default function handler(req, res) {
     if (req.method !== 'POST') {
@@ -10,7 +7,7 @@ export default function handler(req, res) {
     }
 
     const { oldPin, newPin } = req.body;
-    const db = new Database(dbPath);
+    const db = openDatabase();
 
     const row = db.prepare('SELECT hashed_pin FROM pin_storage WHERE id = 1').get();
 

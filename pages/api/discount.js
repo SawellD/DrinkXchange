@@ -1,10 +1,7 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-
-const dbPath = path.join(process.cwd(), 'database', 'bierboerse.db');
+import { openDatabase } from '../../lib/database.cjs';
 
 export default function handler(req, res) {
-  const db = new Database(dbPath);
+  const db = openDatabase();
 
   try {
     const row = db.prepare('SELECT drink_id, end_time FROM discount WHERE id = 1').get();

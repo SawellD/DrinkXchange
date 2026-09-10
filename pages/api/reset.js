@@ -1,18 +1,16 @@
-import path from 'path';
-import Database from 'better-sqlite3';
-
-const dbPath = path.join(process.cwd(), 'database', 'bierboerse.db');
+import { openDatabase } from '../../lib/database.cjs';
+import { DEFAULT_ADMIN_PIN } from '../../lib/adminPin';
 
 export default function handler(req, res) {
   if (req.method === 'POST') {
     const { pin } = req.body;
 
-    if (pin !== '2233') {
+    if (pin !== DEFAULT_ADMIN_PIN) {
       return res.status(403).json({ success: false, message: "Falscher PIN" });
     }
 
     try {
-      const db = new Database(dbPath);
+      const db = openDatabase();
 
       db.prepare('DELETE FROM sales_temp').run();
       db.prepare('DELETE FROM sales_total').run();

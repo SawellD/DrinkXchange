@@ -2,11 +2,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { drinks } from "../lib/drinks";
-import { PageConfig } from "../lib/PageConfig";
-const t = PageConfig.translations[PageConfig.language];
+import { getDrinkPrice } from "../lib/drinkPricing";
+import { getDefaultConfig } from "../lib/appConfig";
 
 export default function HighlightPage() {
+  const [config, setConfig] = useState(getDefaultConfig);
+  const t = config.translations[config.language];
+  const drinks = config.drinks;
   const [discountDrink, setDiscountDrink] = useState(null);
   const [remaining, setRemaining] = useState(null);
   const [nextEval, setNextEval] = useState(1800);
@@ -42,6 +44,7 @@ export default function HighlightPage() {
   };
 
   useEffect(() => {
+    fetch("/api/config").then((res) => res.ok && res.json()).then((data) => data && setConfig(data));
     fetchDiscount();
     fetchStats();
 
@@ -107,111 +110,98 @@ export default function HighlightPage() {
   };
 
   return (
-    <main className="relative flex flex-col justify-start items-center min-h-screen bg-black text-center p-4 sm:p-6 overflow-hidden overflow-y-hidden">
-      {PageConfig.showLogo && (
+    <main className="highlight-screen">
+      {config.showLogo && (
         <>
-          <img src="/logo.png" alt="Logo" className="absolute left-2 top-2 h-32 w-32 object-contain md:h-52 md:w-52 hidden md:block" />
-          <img src="/logo.png" alt="Logo" className="absolute right-2 top-2 h-32 w-32 object-contain md:h-52 md:w-52 hidden md:block" />
+          <img src="/logo.png" alt="Logo" className="highlight-logo highlight-logo--left" />
+          <img src="/logo.png" alt="Logo" className="highlight-logo highlight-logo--right" />
         </>
       )}
 
-      <h1
-        className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-2 mt-4 md:mt-6 drop-shadow-lg"
-        style={{ color: PageConfig.titleColor }}
-      >
-        {PageConfig.title}
-      </h1>
+      <header className="highlight-header">
+        <p className="market-label">{t.marketBoard} · {config.currency}</p>
+        <h1
+          className="highlight-title"
+        style={{ color: config.titleColor }}
+        >{config.title}</h1>
+        <div className="market-status"><span className="status-dot" /> {t.liveUpdates}</div>
+      </header>
 
-      <h2
-        className="text-2xl sm:text-3xl md:text-4xl font-bold drop-shadow-lg mb-2 min-h-[30px] sm:min-h-[40px] md:min-h-[50px] flex items-center justify-center transition-opacity duration-700 ease-in-out"
-        style={{ color: PageConfig.highlightColors.headerText }}
-      >
+      <section className={`highlight-offer ${discountDrink && remaining > 0 ? "highlight-offer--active" : ""}`}>
+        <div className="offer-kicker">{discountDrink && remaining > 0 ? t.activeOffer : t.nextMarketEvent}</div>
+        <h2
+        className="offer-title"
+        style={{ color: config.highlightColors.headerText }}
+        >
         {discountDrink && remaining > 0 ? (
           <>
-            ⭐ {t.Offer} <span style={{ color: PageConfig.highlightColors.discountedText }} className="ml-1 sm:ml-2">{discountDrink.name}</span> ⭐
+            {t.Offer} <span style={{ color: config.highlightColors.discountedText }}>{discountDrink.name}</span>
           </>
-        ) : ""}
-      </h2>
-
-      <div className="flex flex-row justify-center items-center w-full mt-2 sm:mt-4 mb-10 sm:mb-20">
-        <div className="text-center transition-opacity duration-700 ease-in-out">
-          {remaining > 0 && remaining <= 30 ? (
-            <p className="text-4xl sm:text-5xl md:text-7xl font-extrabold animate-bounce drop-shadow-2xl" style={{ color: PageConfig.highlightColors.warningText }}>
-              {t.lastchance}
-            </p>
-          ) : discountDrink && remaining > 0 ? (
-            <p className="text-3xl sm:text-4xl md:text-5xl font-bold drop-shadow-lg" style={{ color: PageConfig.highlightColors.countdownText }}>
-              {t.remaining} {formatTime(remaining)} {t.minutes}
-            </p>
-          ) : isNearNextOffer ? (
-            <p className="text-3xl sm:text-4xl md:text-5xl font-bold animate-zoomIn drop-shadow-lg" style={{ color: PageConfig.highlightColors.warningText }}>
-              {t.nextoffer}
-            </p>
-          ) : nextEval !== null && nextEval > 0 ? (
-            <p className="text-2xl sm:text-3xl md:text-4xl font-bold drop-shadow-lg" style={{ color: PageConfig.highlightColors.countdownText }}>
-              {t.nextofferin} {formatTime(nextEval)}
-            </p>
-          ) : null}
+        ) : t.nextofferin}
+        </h2>
+        {discountDrink && remaining > 0 && (
+          <div className="offer-price" aria-label={`${t.discountedPriceFor} ${discountDrink.name}`}>
+            <span className="offer-price__old">{discountDrink.price} {config.currency}</span>
+            <span className="offer-price__arrow">→</span>
+            <strong>{getDrinkPrice(discountDrink, discountDrink.id, config.discountAmount)} {config.currency}</strong>
+            <span className="offer-price__saving">{t.saveAmount} {config.discountAmount} {config.currency}</span>
+          </div>
+        )}
+        <div className="offer-timer" style={{ color: discountDrink && remaining > 0 ? config.highlightColors.countdownText : config.highlightColors.warningText }}>
+          {remaining > 0 && remaining <= 30 ? t.lastchance : discountDrink && remaining > 0 ? `${t.remaining} ${formatTime(remaining)} ${t.minutes}` : isNearNextOffer ? t.nextoffer : formatTime(nextEval)}
         </div>
-      </div>
+      </section>
 
-      <div className="w-full font-[SegmentDisplay] px-2 sm:px-8">
+      <section className="market-board">
         <div
-          className="grid grid-cols-4 md:grid-cols-[2fr_repeat(3,1fr)] gap-0 border-b-2 sm:border-b-4 border-gray-600 pb-2 sm:pb-4 mb-3 sm:mb-6 text-sm sm:text-xl md:text-6xl font-bold text-center"
-          style={{ color: PageConfig.highlightColors.headerText }}
+          className="market-board__head"
+          style={{ color: config.highlightColors.headerText }}
         >
-          <div className="border-r border-gray-600 sm:border-r-2">{t.drink}</div>
-          <div className="border-r border-gray-600 sm:border-r-2">{t.price}</div>
-          <div className="border-r border-gray-600 sm:border-r-2">{t.total}</div>
-          <div>{t.sinceOffer}</div>
+          <div>{t.drink}</div><div>{t.price}</div><div>{t.total}</div><div>{t.sinceOffer}</div>
         </div>
-      </div>
 
-      <div className="relative w-full h-[calc(100vh-300px)] sm:h-[660px] overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-8 sm:h-16 bg-gradient-to-b from-black to-transparent z-20 pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 w-full h-8 sm:h-16 bg-gradient-to-t from-black to-transparent z-20 pointer-events-none"></div>
+        <div className="market-board__viewport">
+          <div className="market-board__fade market-board__fade--top" />
+          <div className="market-board__fade market-board__fade--bottom" />
 
         <div
-          className="scroll-content font-[SegmentDisplay] px-2 sm:px-8 relative z-10"
+          className="scroll-content market-board__rows"
           style={{ animationDuration: `${calculateScrollDuration(drinks.length)}s` }}
         >
           {[...Array(2)].map((_, index) => (
             <div key={index}>
               {drinks.map((drink) => {
                 const isDiscounted = discountDrink && drink.id === discountDrink.id;
-                const originalPrice = drink.price;
-                const currentPrice = isDiscounted ? originalPrice - 1 : originalPrice;
+                const currentPrice = getDrinkPrice(drink, discountDrink?.id, config.discountAmount);
 
                 return (
-                  <div key={drink.id + "_" + index} className="grid grid-cols-4 md:grid-cols-[2fr_repeat(3,1fr)] gap-0 border-t border-gray-700 sm:border-t-2 text-sm sm:text-xl md:text-5xl text-center tracking-wider h-16 sm:h-24 md:h-32">
-                    <div className="flex items-center justify-center border-r border-gray-600 sm:border-r-2">
-                      <span style={{ color: isDiscounted ? PageConfig.highlightColors.discountedText : PageConfig.highlightColors.defaultText }}>
+                  <div key={drink.id + "_" + index} className={`market-row ${isDiscounted ? "market-row--discounted" : ""}`}>
+                    <div className="market-row__drink">
+                      <span style={{ color: isDiscounted ? config.highlightColors.discountedText : config.highlightColors.defaultText }}>
                         {drink.name}
                       </span>
                     </div>
-                    <div className="flex flex-col items-center justify-center border-r border-gray-600 sm:border-r-2">
+                    <div className="market-row__price">
                       {isDiscounted ? (
                         <>
-                          <span className="text-gray-500 line-through text-base sm:text-lg md:text-xl">
-                            {originalPrice} {PageConfig.currency}
-                          </span>
-                          <span style={{ color: PageConfig.highlightColors.discountedText }} className="font-extrabold animate-pulseHighlight">
-                            {currentPrice} {PageConfig.currency}
+                          <span className="market-row__sale-label">{t.sale}</span>
+                          <span style={{ color: config.highlightColors.discountedText }} className="market-row__current-price animate-pulseHighlight">
+                            {currentPrice} {config.currency}
                           </span>
                         </>
                       ) : (
-                        <span style={{ color: PageConfig.highlightColors.defaultText }}>
-                          {currentPrice} {PageConfig.currency}
+                        <span style={{ color: config.highlightColors.defaultText }} className="market-row__current-price">
+                          {currentPrice} {config.currency}
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center justify-center border-r border-gray-600 sm:border-r-2">
-                      <span style={{ color: isDiscounted ? PageConfig.highlightColors.discountedText : PageConfig.highlightColors.defaultText }}>
+                    <div className="market-row__metric">
+                      <span style={{ color: isDiscounted ? config.highlightColors.discountedText : config.highlightColors.defaultText }}>
                         {stats.total?.[drink.id] || 0}
                       </span>
                     </div>
-                    <div className="flex items-center justify-center">
-                      <span style={{ color: isDiscounted ? PageConfig.highlightColors.discountedText : PageConfig.highlightColors.defaultText }}>
+                    <div className="market-row__metric">
+                      <span style={{ color: isDiscounted ? config.highlightColors.discountedText : config.highlightColors.defaultText }}>
                         {stats.temp?.[drink.id] || 0}
                       </span>
                     </div>
@@ -220,8 +210,8 @@ export default function HighlightPage() {
               })}
             </div>
           ))}
-        </div>
-      </div>
+        </div></div>
+      </section>
     </main>
   );
 }

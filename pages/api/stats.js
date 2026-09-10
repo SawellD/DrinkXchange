@@ -1,11 +1,8 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-
-const dbPath = path.join(process.cwd(), 'database', 'bierboerse.db');
+import { openDatabase } from '../../lib/database.cjs';
 
 export default function handler(req, res) {
   try {
-    const db = new Database(dbPath);
+    const db = openDatabase();
 
     // Verkaufsdaten abrufen
     const totalRows = db.prepare('SELECT drink_id, SUM(amount) as total FROM sales_total GROUP BY drink_id').all();

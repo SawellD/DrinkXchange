@@ -1,0 +1,13 @@
+services:
+  drinkxchange:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    volumes:
+      - ./database:/app/database
+    restart: unless-stopped

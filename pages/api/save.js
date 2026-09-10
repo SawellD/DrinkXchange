@@ -1,12 +1,9 @@
-import path from 'path';
-import Database from 'better-sqlite3';
-
-const dbPath = path.join(process.cwd(), 'database', 'bierboerse.db');
+import { openDatabase } from '../../lib/database.cjs';
 
 export default function handler(req, res) {
   if (req.method === 'POST') {
     try {
-      const db = new Database(dbPath);
+      const db = openDatabase();
       const sales = req.body;
 
       console.log("Daten empfangen:", sales);  // <-- Debug!
@@ -19,12 +16,15 @@ export default function handler(req, res) {
         'INSERT INTO sales_total (drink_id, amount, timestamp) VALUES (?, ?, datetime(\'now\', \'localtime\'))'
       );
 
-      Object.keys(sales).forEach((id) => {
-        if (sales[id] > 0) {
-          insertTemp.run(id, sales[id]);
-          insertTotal.run(id, sales[id]);
-        }
+      const insertSales = db.transaction(() => {
+        Object.keys(sales).forEach((id) => {
+          if (sales[id] > 0) {
+            insertTemp.run(id, sales[id]);
+            insertTotal.run(id, sales[id]);
+          }
+        });
       });
+      insertSales();
 
       db.close();
 

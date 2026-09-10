@@ -1,11 +1,8 @@
-import Database from "better-sqlite3";
-import path from "path";
-
-const dbPath = path.join(process.cwd(), "database", "bierboerse.db");
+import { openDatabase } from "../../lib/database.cjs";
 
 export default function handler(req, res) {
   try {
-    const db = new Database(dbPath);
+    const db = openDatabase();
     const { range } = req.query;
 
     // Standard-Zeitraum: Letzte 2 Stunden (Falls keine Auswahl erfolgt) – lokale Zeit verwenden

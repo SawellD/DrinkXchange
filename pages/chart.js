@@ -8,6 +8,7 @@ import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
+  LineController,
   LineElement,
   TimeScale,
   Title,
@@ -17,11 +18,12 @@ import {
 } from "chart.js";
 import "chartjs-adapter-date-fns";
 import { Chart } from "react-chartjs-2";
-import { drinks } from "../lib/drinks";
+import { getDefaultConfig } from "../lib/appConfig";
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
+  LineController,
   LineElement,
   TimeScale,
   PointElement,
@@ -31,11 +33,14 @@ ChartJS.register(
 );
 
 export default function ChartPage() {
+  const [config, setConfig] = useState(getDefaultConfig);
+  const t = config.translations[config.language];
+  const [availableDrinks, setAvailableDrinks] = useState(getDefaultConfig().drinks);
   const [selectedDrinks, setSelectedDrinks] = useState(
-    drinks.map((drink) => ({ value: drink.id, label: drink.name }))
+    getDefaultConfig().drinks.map((drink) => ({ value: drink.id, label: drink.name }))
   );
   const [rawSalesData, setRawSalesData] = useState([]);
-  const [selectedRange, setSelectedRange] = useState("2hrs");
+  const [selectedRange, setSelectedRange] = useState("24hrs");
   const router = useRouter();
   const chartRef = useRef(null);
 
@@ -51,6 +56,12 @@ export default function ChartPage() {
   };
 
   useEffect(() => {
+    fetch("/api/config").then((res) => res.ok && res.json()).then((config) => {
+      if (!config?.drinks) return;
+      setConfig(config);
+      setAvailableDrinks(config.drinks);
+      setSelectedDrinks(config.drinks.map((drink) => ({ value: drink.id, label: drink.name })));
+    });
     fetchTimeSalesData();
     const interval = setInterval(() => {
       fetchTimeSalesData();
@@ -79,7 +90,9 @@ export default function ChartPage() {
     salesData
       .filter((sale) => sale.drink_id === drinkId)
       .forEach((sale) => {
-        const saleTime = new Date(sale.timestamp.replace(" ", "T"));
+        // SQLite stores the server timestamp without a timezone. The Docker
+        // container uses UTC, so mark it explicitly before local charting.
+        const saleTime = new Date(`${sale.timestamp.replace(" ", "T")}Z`);
         saleTime.setSeconds(0, 0);
         const key = saleTime.getTime();
         if (groupedData.has(key)) {
@@ -185,13 +198,13 @@ export default function ChartPage() {
   return (
     <main className="flex flex-col items-center min-h-screen bg-black text-white p-6">
       <h1 className="text-3xl font-bold mb-4 text-red-500">
-        Getränke-Verkäufe
+        {t.chartTitle}
       </h1>
 
       <div className="mb-4 w-full max-w-md">
         <Select
           isMulti
-          options={drinks.map((drink) => ({
+          options={availableDrinks.map((drink) => ({
             value: drink.id,
             label: drink.name,
           }))}
@@ -206,10 +219,10 @@ export default function ChartPage() {
         onChange={(e) => setSelectedRange(e.target.value)}
         className="p-2 mb-4 bg-gray-800 text-white rounded-md"
       >
-        <option value="24hrs">Letzte 24 Stunden</option>
-        <option value="3hrs">Letzte 3 Stunden</option>
-        <option value="1hr">Letzte 1 Stunde</option>
-        <option value="10min">Letzte 10 Minuten</option>
+        <option value="24hrs">{t.last24Hours}</option>
+        <option value="3hrs">{t.last3Hours}</option>
+        <option value="1hr">{t.lastHour}</option>
+        <option value="10min">{t.last10Minutes}</option>
       </select>
 
       <div className="w-full bg-gray-900 p-4 rounded-lg shadow-lg mb-4">
@@ -218,13 +231,13 @@ export default function ChartPage() {
 
       <div className="flex flex-col gap-4 w-full max-w-md mt-6">
         <button onClick={() => router.push("/")} className="bg-gray-600 hover:bg-gray-800 text-white px-4 py-2 text-lg rounded-md">
-          Zurück zur Startseite
+          {t.backHome}
         </button>
         <button onClick={exportChartAsImage} className="bg-purple-600 hover:bg-purple-800 text-white px-4 py-2 text-lg rounded-md">
-          Diagramm exportieren (PNG)
+          {t.exportPng}
         </button>
         <button onClick={exportDataAsCSV} className="bg-orange-600 hover:bg-orange-800 text-white px-4 py-2 text-lg rounded-md">
-          Verkaufsdaten exportieren (CSV)
+          {t.exportCsv}
         </button>
       </div>
     </main>
